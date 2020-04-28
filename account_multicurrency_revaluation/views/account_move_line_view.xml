@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_move_put_reeval_fields_tree" model="ir.ui.view">
+            <field name="model">account.move.line</field>
+            <field name="inherit_id" ref="account.view_move_line_tree"/>
+            <field name="arch" type="xml">
+				<xpath expr="//tree" position="inside">
+                    <field name="gl_foreign_balance" optional="hide"/>
+                    <field name="gl_balance" optional="hide"/>
+                    <field name="gl_revaluated_balance" optional="hide"/>
+                    <field name="gl_currency_rate" optional="hide"/>
+				</xpath>
+            </field>
+        </record>
+
+        <record id="view_move_put_reeval_fields2_tree" model="ir.ui.view">
+            <field name="model">account.move.line</field>
+            <field name="inherit_id" ref="account.view_move_line_tree_grouped"/>
+            <field name="arch" type="xml">
+				<xpath expr="//tree" position="inside">
+                    <field name="gl_foreign_balance" optional="hide"/>
+                    <field name="gl_balance" optional="hide"/>
+                    <field name="gl_revaluated_balance" optional="hide"/>
+                    <field name="gl_currency_rate" optional="hide"/>
+				</xpath>
+            </field>
+        </record>
+
+        <record id="view_account_move_line_add_reeval_filter" model="ir.ui.view">
+            <field name="model">account.move.line</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter"/>
+            <field name="arch" type="xml">
+                <filter name="date" position="before">
+                    <filter string="Reevaluation lines" name="reevaluation_lin" domain="[('move_id.revaluation_to_reverse', '=', True)]" />
+                </filter>
+            </field>
+        </record>
+
+    </data>
+</odoo>
