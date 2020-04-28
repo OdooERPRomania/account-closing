@@ -15,6 +15,7 @@
         "security/security.xml",
         "views/account_view.xml",
         "views/account_move_views.xml",
+        "views/account_move_line_view.xml",
         "wizard/print_currency_unrealized_report_view.xml",
         "wizard/wizard_currency_revaluation_view.xml",
         "report/assets.xml",

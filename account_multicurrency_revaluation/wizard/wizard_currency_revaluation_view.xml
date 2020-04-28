@@ -13,7 +13,9 @@
                 <group>
                     <group>
                         <field name="revaluation_date" />
-                        <field name="journal_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="journal_id" />
+                        <field name="currencies_at_date" redonly="1"/>
                     </group>
                     <group colspan="4">
                         <field name="label"/>

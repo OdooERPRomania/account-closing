@@ -22,7 +22,7 @@ class UnrealizedCurrencyReportPrinter(models.TransientModel):
         account_ids = account_model.search([("currency_revaluation", "=", True)]).ids
         return [(6, 0, account_ids)]
 
-    def print_report(self, data):
+    def print_report(self):
         """
         Show the report
         """

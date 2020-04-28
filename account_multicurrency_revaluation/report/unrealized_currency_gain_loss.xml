@@ -26,6 +26,7 @@
                             <div class="act_as_thead">
                                 <div class="act_as_row labels">
                                     <div class="act_as_cell first_column">Partner</div>
+                                    <div class="act_as_cell first_column" style="width: 100px;">Reval. Date</div>
                                     <div class="act_as_cell first_column amount" style="width: 100px;">Curr. Balance YTD</div>
                                     <div class="act_as_cell first_column amount" style="width: 50px;"></div>
                                     <div class="act_as_cell first_column amount" style="width: 80px;">Revaluation Rate</div>
@@ -35,8 +36,11 @@
                                 </div>
                                 <t t-foreach="sh_acc.ordered_lines" t-as="line">
                                     <div class="act_as_row lines">
-                                        <div class="act_as_cell">
+                                        <div class="act_as_cell" >
                                             <span t-esc="line.get('name') or '--'"/>
+                                        </div>
+                                        <div class="act_as_cell" style="width: 100px;">
+                                            <span t-esc="line.get('date') or '--'"/>
                                         </div>
                                         <div class="act_as_cell amount" style="width: 100px;">
                                             <span t-esc="line.get('gl_foreign_balance') or 0.0"/>
@@ -63,6 +67,7 @@
                                 </t>
                                 <div class="act_as_row lines labels">
                                     <div class="act_as_cell"><b>TOTAL</b></div>
+                                    <div class="act_as_cell"></div>
                                     <div class="act_as_cell"></div>
                                     <div class="act_as_cell"></div>
                                     <div class="act_as_cell"></div>

@@ -3,7 +3,7 @@
 
 from odoo import _, api, fields, models
 from odoo.exceptions import Warning as UserError
-
+from dateutil.relativedelta import relativedelta
 
 class WizardCurrencyRevaluation(models.TransientModel):
 
@@ -15,14 +15,9 @@ class WizardCurrencyRevaluation(models.TransientModel):
         """
         Get today's date
         """
-        return fields.date.today()
-
-    @api.model
-    def _get_default_journal_id(self):
-        """
-        Get default journal if one is defined in company settings
-        """
-        return self.env.user.company_id.currency_reval_journal_id
+        today = fields.date.today()
+        last_day_from_last_month = today + relativedelta(day=1)-relativedelta(days=1)
+        return last_day_from_last_month
 
     @api.model
     def _get_default_label(self):
@@ -31,18 +26,27 @@ class WizardCurrencyRevaluation(models.TransientModel):
         """
         return "%(currency)s %(account)s %(rate)s currency revaluation"
 
+    company_id = fields.Many2one(
+        "res.company",
+        string="Company",
+        required=True,
+        help="Will filter the possible journals",
+        default=lambda self: self.env.company.id,
+    )
+    currencies_at_date = fields.Text(readonly=1,help='At selected date what are the values of enabled currencies')
+
     revaluation_date = fields.Date(
         string="Revaluation Date",
         required=True,
         default=lambda self: self._get_default_revaluation_date(),
+        help="Is going to compute this date inclusive. The valute rate will be from this day"
     )
     journal_id = fields.Many2one(
         comodel_name="account.journal",
         string="Journal",
-        domain="[('type','=','general')]",
+        domain="[('type','=','general'),('company_id','=',company_id)]", #domain="[('company_id','=',company_id)]"
         help="You can set the default journal in company settings.",
         required=True,
-        default=lambda self: self._get_default_journal_id(),
     )
     label = fields.Char(
         string="Entry description",
@@ -52,6 +56,26 @@ class WizardCurrencyRevaluation(models.TransientModel):
         required=True,
         default=lambda self: self._get_default_label(),
     )
+
+    @api.onchange('revaluation_date','company_id')
+    def onchange_date_show_currencies(self):
+        self.ensure_one()
+        if not self.journal_id or (self.company_id and self.journal_id and self.journal_id.company_id != self.company_id):
+            self.journal_id = self.company_id.currency_reval_journal_id
+        if self.company_id:
+            res_currency_obj = self.env['res.currency']
+            active_currencies = res_currency_obj.search([])
+            currencies_text = ''
+            currency_rates = active_currencies._get_rates( self.company_id, self.revaluation_date)
+            for currency_id in active_currencies:
+                rate = currency_rates.get(currency_id.id,1)
+                currencies_text += f"{currency_id.name}:rate {rate:.4f} invers_rate {1/rate:.4f} \n"
+            self.currencies_at_date= currencies_text
+        if self.revaluation_date and self.company_id:
+            other_revaluations = self.env['account.move'].search([('date','=',self.revaluation_date),('revaluation_to_reverse','=',True),('company_id','=',self.company_id.id)])
+            for reval in  other_revaluations:
+                if reval.line_ids:
+                    return {'warning': {'title': _('Warning'), 'message': _('You have another reevaluation with entries in this date.\n If noting is changed will not create any entry. '),},}
 
     def _create_move_and_lines(
         self,
@@ -106,7 +130,7 @@ class WizardCurrencyRevaluation(models.TransientModel):
         return [x.id for x in created_move.line_ids]
 
     def _compute_unrealized_currency_gl(self, currency_id, balances):
-        """
+        """  gl = gain/loss
         Update data dict with the unrealized currency gain and loss
         plus add 'currency_rate' which is the value used for rate in
         computation
@@ -342,7 +366,7 @@ class WizardCurrencyRevaluation(models.TransientModel):
             )
 
         # Get balance sums
-        account_sums = account_ids.compute_revaluations(self.revaluation_date)
+        account_sums = account_ids.compute_revaluations(self.revaluation_date, company.id)
 
         for account_id, account_tree in account_sums.items():
             for partner_id, partner_tree in account_tree.items():
